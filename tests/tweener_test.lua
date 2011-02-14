@@ -1,0 +1,253 @@
+local tweener = require "tweener.base"
+local easing = require("tweener.easing")
+
+describe("tweener", function()
+  context("in general", function()
+    before(function()
+      ts = tweener("forward")
+    end)
+
+    test("can be iterated", function()
+      t1, t2, count = ts.add(), ts.add(), 0
+      for i, t in ts.eachTween() do
+        count = count + 1
+        if i == 1 then assert_equal(t1, t) end
+        if i == 2 then assert_equal(t2, t) end
+      end
+      assert_equal(count, 2)
+    end)
+
+    test("adding initial properties when I initialize a tween", function()
+      assert_equal("forward", ts.getMode())
+      assert_equal(ts.getLength(), 0)
+      ts.add { x = 1, y = 2 }
+      assert_equal(ts.getLength(), 1)
+      p = ts.getCurrentProperties()
+      assert_equal(p.x, 1); assert_equal(p.y, 2)
+    end)
+
+    test("removing tweens", function()
+      assert_equal(ts.getLength(), 0)
+      ts.remove(1); assert_equal(ts.getLength(), 0)
+      t = ts.add(); assert_equal(ts.getLength(), 1)
+      ts.remove(t); assert_equal(ts.getLength(), 0)
+    end)
+
+    test("can set the current tween, which resets the elapsed time", function()
+      t1, t2 = ts.add(10), ts.add(10)
+      ts.update(5); assert_equal(ts.getCurrent(), t1)
+      assert_equal(ts.getElapsed(), 5)
+      ts.setCurrent(t2); assert_equal(ts.getCurrent(), t2)
+      assert_equal(ts.getElapsed(), 0)
+    end)
+
+    test("updating does not go to the next tween until enough time has elapsed", function()
+      t1, t2 = ts.add(), ts.add(10)
+      for i = 1, 9 do ts.update(1); assert_equal(ts.getCurrent(), t1) end
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+    end)
+  end)
+
+  local function tweenerGoing(direction, numberOfTweens)
+    local ts, tweens = tweener(direction), {}
+    for i = 1, numberOfTweens do tweens[#tweens + 1] = ts.add(1, {t=i}) end
+    return ts, unpack(tweens)
+  end
+
+  context("forward mode", function()
+    test("it returns nil with 0 tweens", function()
+      ts = tweenerGoing("forward", 0)
+      assert_nil(ts.getCurrent())
+    end)
+
+    test("returns always the same tween if only 1", function()
+      ts, t1 = tweenerGoing("forward", 1)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+    end)
+
+    test("it goes forward 2 tweens until there are no more", function()
+      ts, t1, t2 = tweenerGoing("forward", 2)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+    end)
+
+    test("it switches 3 tweens forward until there are no more", function()
+      ts, t1, t2, t3 = tweenerGoing("forward", 3)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      assert_equal(ts.getElapsed(), 0)
+      ts.update(1); assert_equal(ts.getCurrent(), t3)
+      assert_equal(ts.getElapsed(), 0)
+      ts.update(1); ts.update(1); assert_equal(ts.getCurrent(), t3)
+      assert_equal(ts.getElapsed(), 2) -- no more tweens, so keeps counting
+      ts.setCurrent(1); assert_equal(ts.getCurrent(), t1) -- can be "rewinded"
+      assert_equal(ts.getElapsed(), 0)
+      ts.setCurrent(t1); assert_equal(ts.getCurrent(), t1)
+      assert_equal(ts.getElapsed(), 0)
+    end)
+  end)
+
+  context("backward mode", function()
+    test("it returns nil with 0 tweens", function()
+      ts = tweenerGoing("backward", 0)
+      assert_nil(ts.getCurrent())
+    end)
+
+    test("returns always the same tween if only 1", function()
+      ts, t1 = tweenerGoing("backward", 1)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+    end)
+
+    test("it goes backward 2 tweens until there are no more", function()
+      ts, t1, t2 = tweenerGoing("backward", 2)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.setCurrent(t2); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+    end)
+
+    test("it switches tweens backwards until there are no more", function()
+      ts, t1, t2, t3 = tweenerGoing("backward", 3)
+      ts.setCurrent(3); assert_equal(ts.getCurrent(), t3)
+      ts.setCurrent(t3); assert_equal(ts.getCurrent(), t3)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1)
+      assert_equal(ts.getElapsed(), 2) -- no more tweens, so keeps counting
+    end)
+  end)
+
+  context("loopforward mode", function()
+    test("it returns nil with 0 tweens", function()
+      ts = tweenerGoing("loopforward", 0)
+      assert_nil(ts.getCurrent())
+    end)
+
+    test("returns always the same tween if only 1", function()
+      ts, t1 = tweenerGoing("loopforward", 1)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+    end)
+
+    test("it goes loopforward 2 tweens until there are no more", function()
+      ts, t1, t2 = tweenerGoing("loopforward", 2)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+    end)
+
+    test("it switches tweens forward until it reaches the end, then goes back to the start", function()
+      ts, t1, t2, t3 = tweenerGoing("loopforward", 3)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t3)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t3)
+    end)
+  end)
+
+  context("loopbackward mode", function()
+    test("it returns nil with 0 tweens", function()
+      ts = tweenerGoing("loopbackward", 0)
+      assert_nil(ts.getCurrent())
+    end)
+
+    test("returns always the same tween if only 1", function()
+      ts, t1 = tweenerGoing("loopbackward", 1)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+    end)
+
+    test("it goes loopbackward 2 tweens until there are no more", function()
+      ts, t1, t2 = tweenerGoing("loopbackward", 2)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+    end)
+
+    test("it switches tweens backwards until it reaches the end, then goes back to the end", function()
+      ts, t1, t2, t3 = tweenerGoing("loopbackward", 3)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t3)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t3)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+    end)
+  end)
+
+  context("pingpong mode", function()
+    test("it returns nil with 0 tweens", function()
+      ts = tweenerGoing("pingpong", 0)
+      assert_nil(ts.getCurrent())
+    end)
+
+    test("returns always the same tween if only 1", function()
+      ts, t1 = tweenerGoing("pingpong", 1)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+    end)
+
+    test("it goes pingpong 2 tweens until there are no more", function()
+      ts, t1, t2 = tweenerGoing("pingpong", 2)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+    end)
+
+    test("it switches tweens backwards until it reaches the end, then goes back to the end", function()
+      ts, t1, t2, t3 = tweenerGoing("loopbackward", 3)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t3)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t3)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+    end)
+
+    test("it switches tweens backwards until it reaches the end, then goes forward to the end, then repeats", function()
+      ts, t1, t2, t3 = tweenerGoing("pingpong", 3)
+      assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t3)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t3)
+      ts.update(1); assert_equal(ts.getCurrent(), t2)
+      ts.update(1); assert_equal(ts.getCurrent(), t1)
+    end)
+  end)
+
+  context("easing properties", function()
+
+    test("includes properties from current and eases numerics with the next", function()
+      something = {}
+      ts = tweener("forward")
+      ts.add(1, { x = 1, y = 1, z = true }, easing.linear)
+      ts.add(1, { x = 2, y = 2, z = something }, easing.linear)
+
+      ts.update(0.5)
+      p = ts.getCurrentProperties()
+      assert_equal(p.x, 1.5)
+      assert_equal(p.y, 1.5)
+      assert_equal(p.z, true)
+
+      ts.update(0.5)
+      p = ts.getCurrentProperties()
+      assert_equal(p.x, 2)
+      assert_equal(p.y, 2)
+      assert_equal(p.z, something)
+    end)
+
+  end)
+end)
