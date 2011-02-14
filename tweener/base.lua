@@ -35,11 +35,7 @@ local function tween(d, f, p)
 end
 
 local function tweener(mode)
-  local tweens = {}      -- Initial tween.
-  local currentIndex     -- current tween index
-  local elapsed = 0      -- elapsed time.
-
-  local pingPongDirection = 1
+  local tweens, currentIndex, elapsed, pingPongDirection
 
   -- internal function to find a tween in the array of tweens
   local function tweenIndex(tween)
@@ -214,12 +210,21 @@ local function tweener(mode)
     return p
   end
 
+  local function reset()
+    tweens = {}        -- Initial tween.
+    currentIndex = nil -- current tween index
+    elapsed = 0        -- elapsed time.
+    pingPongDirection = 1
+  end
+
+  reset()
   setMode(mode)
 
   return {
     getCurrentProperties = getCurrentProperties,
     add = add,
     remove = remove,
+    reset = reset,
     getLength = function() return #tweens end,
     getElapsed = function() return elapsed end,
     setCurrent = setCurrent,
