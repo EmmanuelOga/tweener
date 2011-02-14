@@ -7,7 +7,7 @@ specified easing function.More info on tweening can be found
 
 The easing functions are the ones provided by
 the [easing library](https://github.com/emmanueloga/easing), which is
-vendor in this repository.
+vendored in this repository.
 
 Usage
 =====
@@ -52,9 +52,9 @@ following animation modes:
 
   * forward: moves forward from tween to tween until there are no more.
   * backward: moves backward from tween to tween until there are no more.
-  * loopforward: moves forward from tween to tween until there are no more, then starts all over again.
-  * loopbackward:  moves backward from tween to tween until there are no more, then starts all over again.
-  * pingpong: moves forward till completion, then moves backward till completion, and repeats.
+  * loopforward: moves forward until there are no more tweens, then starts all over again.
+  * loopbackward:  moves backward until there are no more tweens, then starts all over again.
+  * pingpong: moves forward until completion, then moves backward until completion, and repeats.
 
 The add function spects to find exactly 3 parameters: an easing
 function, a duration for the tween and a set of properties.  When
@@ -66,17 +66,17 @@ calling add, you can order the parameters however you like:
     ts.add({ x = 1, y = 1, z = true }, 1, easing.linear)
     ts.add(easing.linear, { x = 1, y = 1, z = true }, 1)
 
-If you miss parameters the properties are defaulted to an empty table,
-the easing function to the a linear one and the duration to 1 second.
+If you miss any of the parameters the defaults kick in: an empty table for properties,
+the linear function for easing and 1 second as the duration.
 
 The only properties that are interpolated are the numeric ones. When you
 request the properties of a tween you receive all the properties exactly
-as you provided them. If the current tween and the next one share a
-property, then the value of that property gets interpolated according to
+as you provided them, but If the current and next tweens share a
+numeric property, then the value of that property gets interpolated according to
 the time elapsed.
 
 Once you set up the tweens you need to periodically update the elapsed
-time.
+time:
 
       ts.update(elapsedSecondsSinceLastUpdate)
 
@@ -84,12 +84,11 @@ Finally, to retrieve the properties you call:
 
       local p = ts.getCurrentProperties()
 
-The long name "getCurrentProperties" was chosen because the call is
-relatively expensive (if you have tens of properties to interpolate) so
-it is better to call it once per frame so the properties are not
-calculated more than once.
+The name of the function "getCurrentProperties" is intentionally long because the call is
+relatively expensive (if you have tens of properties to interpolate). It is better to call it
+once per frame so the properties are not calculated more than once.
 
-The avalaible API is:
+The complete available API is:
 
     local tweener = require "tweener.base"
     local easing = require "tweener.easing"
@@ -109,13 +108,14 @@ The avalaible API is:
     ts.udpate(elapsed)        --> update the elapsed time in current tween.
     ts.eachTween()            --> iterator that returns each tween with its index.
 
-Finally, tween objects are just tables which store three things: the
+Tween objects, returned by the add function and a few others from the API,
+are just tables which store three things: the
 duration of the tween, the easing function and the table of properties.
-When the tweener is about to enter a tween it uses his easing function
-to interpolate the values.
+When the tweener is about to enter a tween it uses the easing function
+stored on that tween to interpolate the values.
 
-An example of how to use a single tween is how you can change the
-interpolation function of all of them after their creation:
+Here is an example of accesing the tween objects to change the
+interpolation function of all of them after created:
 
     local ts = tweener("forward")
 
@@ -156,7 +156,7 @@ From the library's root directory, run:
 TODO
 ====
 
-* luadocs
+* Add luadocs
 * inOutElastic easing works weird in one of the examples
 
 Author
