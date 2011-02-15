@@ -170,7 +170,7 @@ local function tweener(mode)
     local currentTween, nextTween = getCurrent(), getNext()
 
     if #tweens > 1 then
-      if nextTween and (nextTween.d - elapsed < 0.01) then -- almost zero
+      if nextTween and (elapsed >= nextTween.d) then
         moveToNextIndex()
         elapsed = 0
       end
@@ -190,7 +190,7 @@ local function tweener(mode)
       for k, v in pairs(currentTween.p) do p[k] = v end
     end
 
-    if nextTween then
+    if nextTween and elapsed > 0 then
       local b
       local duration = nextTween.d
       local fun = nextTween.f
