@@ -2,7 +2,7 @@ local tweener = require "tweener.base"
 local easing = require "tweener.easing"
 
 RADIUS = 250
-W, H, OFFSET, DURATION = 800, 600, 100, 1
+W, H, OFFSET, DURATION = 800, 600, 100, 0.5
 
 local tnext = tweener("loopforward")
 
@@ -40,9 +40,9 @@ function love.draw()
 
   local tpos = tnext.getCurrentProperties()
 
-  love.graphics.setColor(0, 255, 0, 232)
+  love.graphics.setColor(255, 0, 0, 255)
   love.graphics.circle("fill", tpos.x, tpos.y, 50, 50)
-  love.graphics.setColor(0, 255, 0, 232)
+  love.graphics.setColor(0, 255, 0, 255)
   love.graphics.circle("fill", lastx, lasty, 50, 50)
 
   lastx, lasty = tpos.x, tpos.y
@@ -56,6 +56,7 @@ function love.draw()
 
   love.graphics.print("Position: " .. i .. " of " .. tnext.getLength(), 10, 100)
   love.graphics.print("Mode: " .. tnext.getMode(), 10, 130)
+  love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 160)
 end
 
 function love.update(dt)

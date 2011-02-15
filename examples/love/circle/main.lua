@@ -17,7 +17,6 @@ function love.load()
 
   tangle.add(0,        { angle = 0 },           easing[functions[selFunPos]])
   tangle.add(DURATION, { angle = 2 * math.pi }, easing[functions[selFunPos]])
-  tangle.add(0,        { angle = 0 },           easing[functions[selFunPos]])
 end
 
 local function renderWithAngle(angle)
