@@ -16,7 +16,8 @@ table.sort(functions)
 local selFunPos, selFunSize = 1, 1
 
 function love.load()
-  love.graphics.setLine(2, "smooth")
+  love.graphics.setLineWidth(2)
+  love.graphics.setLineStyle("smooth")
 
   tpos.add(DURATION, { x = OFFSET,     y = OFFSET }, easing[functions[selFunPos]])
   tpos.add(DURATION, { x = W - OFFSET, y = OFFSET }, easing[functions[selFunPos]])

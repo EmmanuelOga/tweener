@@ -13,7 +13,8 @@ table.sort(functions)
 local selFunPos = 7
 
 function love.load()
-  love.graphics.setLine(2, "smooth")
+  love.graphics.setLineWidth(2)
+  love.graphics.setLineStyle("smooth")
 
   tangle.add(0,        { angle = 0 },           easing[functions[selFunPos]])
   tangle.add(DURATION, { angle = 2 * math.pi }, easing[functions[selFunPos]])

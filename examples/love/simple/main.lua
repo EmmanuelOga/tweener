@@ -12,7 +12,8 @@ table.sort(functions)
 local selFunPos = 7
 
 function love.load()
-  love.graphics.setLine(2, "smooth")
+  love.graphics.setLineWidth(2)
+  love.graphics.setLineStyle("smooth")
 
   tpos.add(DURATION, { x = OFFSET,     y = OFFSET }, easing[functions[selFunPos]]) -- a
   tpos.add(DURATION, { x = W - OFFSET, y = OFFSET }, easing[functions[selFunPos]]) -- b
@@ -57,5 +58,7 @@ function love.keypressed(key, unicode)
     if selFunPos > 1 then selFunPos = selFunPos - 1 end; updateEasingFuncs()
   elseif key == 'right' then
     if selFunPos < #functions then selFunPos = selFunPos + 1 end; updateEasingFuncs()
+  elseif key == 'q' then
+    love.event.quit()
   end
 end
